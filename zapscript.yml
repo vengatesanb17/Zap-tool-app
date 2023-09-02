@@ -4,35 +4,52 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'
 
-variables:
-  zapVersion: '2.10.0'  # Update to the desired ZAP version
-  websiteUrl: 'http://localhost:8089/'  # Replace with your website URL
+jobs:
+- job: InstallZap
+  steps:
+  - script: |
+      # Update the package list
+      sudo apt-get update
 
-steps:
-- script: |
-    # Download and install ZAP
-    wget https://github.com/zaproxy/zaproxy/releases/download/v$(zapVersion)/ZAP_$(zapVersion)_Core.zip
-    unzip ZAP_$(zapVersion)_Core.zip -d zap
-    export PATH=$PATH:$(Agent.TempDirectory)/zap
+      # Install OpenJDK (Java is required for ZAP)
+      sudo apt-get install -y openjdk-11-jdk
 
-    # Grant execute permissions to zap.sh
-    chmod +x $(Agent.TempDirectory)/zap/zap.sh
+      # Download and unzip ZAP
+      wget https://github.com/zaproxy/zaproxy/releases/download/$(curl -s https://api.github.com/repos/zaproxy/zaproxy/releases/latest | grep tag_name | cut -d '"' -f 4)/ZAP_$(curl -s https://api.github.com/repos/zaproxy/zaproxy/releases/latest | grep tag_name | cut -d '"' -f 4)_Linux.tar.gz
+      tar -xzf ZAP_*.tar.gz -C $(Agent.ToolsDirectory)/zap
 
-    # Start ZAP in headless mode
-    $(Agent.TempDirectory)/zap/zap.sh -daemon -port 8080 -config api.disablekey=true -config scanner.attackOnStart=true -addoninstall ascanrulesBeta -addoninstall pscanrulesBeta -addoninstall wappalyzer -addoninstall psnarules
+      # Set environment variables
+      echo 'export PATH=$PATH:$(Agent.ToolsDirectory)/zap' >> ~/.bashrc
+    displayName: 'Install ZAP Tool'
 
-    # Spider and scan your website
-    $(Agent.TempDirectory)/zap/zap-cli -p 8080 -z "spider target=$(websiteUrl) recurse=1 maxchildren=10"
-    $(Agent.TempDirectory)/zap/zap-cli -p 8080 -z "active-scan target=$(websiteUrl) recurse=1 maxchildren=10"
+- job: TestWebsiteWithZap
+  dependsOn: InstallZap
+  steps:
+  - script: |
+      # Start ZAP in daemon mode (headless)
+      zap.sh -daemon -port 8080 -config api.disablekey=true
 
-    # Generate the ZAP report in NUnit XML format
-    $(Agent.TempDirectory)/zap/zap-cli -p 8080 -z "report -o $(Agent.TempDirectory)/zap-report.xml -f nunit-xml"
-  displayName: 'Run ZAP Scan and Generate Report'
+      # Spider and scan your website (modify the website URL as needed)
+      zap-cli -p 8080 -z "spider target=http://localhost:8089/ recurse=1 maxchildren=10"
+      zap-cli -p 8080 -z "active-scan target=http://localhost:8089/ recurse=1 maxchildren=10"
 
-- task: PublishTestResults@2
-  inputs:
-    testResultsFiles: '$(Agent.TempDirectory)/zap-report.xml'
-    testRunTitle: 'ZAP Scan'
-    testRunSystem: 'ZAP'
-    searchFolder: '$(Agent.TempDirectory)'
-  displayName: 'Publish ZAP Test Results'
+      # Generate a ZAP report in NUnit XML format
+      zap-cli -p 8080 -z "report -o zap-report.xml -f nunit-xml"
+
+      # Optional: Save the report as an artifact
+      mv zap-report.xml $(Build.ArtifactStagingDirectory)/
+    displayName: 'Test Website with ZAP'
+
+  - publish: $(Build.ArtifactStagingDirectory)
+    artifact: 'zap-reports'
+    displayName: 'Publish ZAP Reports'
+
+- job: PublishNUnitReport
+  dependsOn: TestWebsiteWithZap
+  steps:
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFiles: '$(Build.ArtifactStagingDirectory)/zap-report.xml'
+      testRunTitle: 'ZAP Scan'
+      testRunSystem: 'ZAP'
+    displayName: 'Publish ZAP Test Results'
