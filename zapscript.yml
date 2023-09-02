@@ -5,28 +5,20 @@ pool:
   vmImage: 'ubuntu-latest'
 
 jobs:
-- job: TestWebsiteWithZap
-  dependsOn: InstallZap
+- job: InstallZap
   steps:
   - script: |
-      # Start ZAP in daemon mode (headless)
-      zap.sh -daemon -port 8080 -config api.disablekey=true
+      # Update the package list
+      sudo apt-get update
 
-      # Wait for ZAP to start
-      sleep 10
+      # Install OpenJDK (Java is required for ZAP)
+      sudo apt-get install -y openjdk-11-jdk
 
-      # Spider and scan your website (modify the website URL as needed)
-      zap-cli -p 8080 -z "spider target=http://localhost:8089/ recurse=1 maxchildren=10"
-      zap-cli -p 8080 -z "active-scan target=http://localhost:8089/ recurse=1 maxchildren=10"
+      # Install ZAP via APT (you can specify the desired version)
+      sudo apt-get install -y zaproxy
 
-      # Generate a ZAP report in NUnit XML format
-      zap-cli -p 8080 -z "report -o zap-report.xml -f nunit-xml"
-
-      # Optional: Save the report as an artifact
-      mv zap-report.xml $(Build.ArtifactStagingDirectory)/
-
-    displayName: 'Run ZAP Scan'
-
+    displayName: 'Install ZAP Tool'
+    
 - job: TestWebsiteWithZap
   dependsOn: InstallZap
   steps:
