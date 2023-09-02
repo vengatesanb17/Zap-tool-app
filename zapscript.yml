@@ -1,5 +1,5 @@
 trigger:
-- master
+- main
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -14,9 +14,12 @@ jobs:
       # Install OpenJDK (Java is required for ZAP)
       sudo apt-get install -y openjdk-11-jdk
 
+      # Define the desired ZAP version
+      zapVersion="2.10.0"  # Update to the desired ZAP version
+
       # Download and unzip ZAP
-      wget https://github.com/zaproxy/zaproxy/releases/download/$(curl -s https://api.github.com/repos/zaproxy/zaproxy/releases/latest | grep tag_name | cut -d '"' -f 4)/ZAP_$(curl -s https://api.github.com/repos/zaproxy/zaproxy/releases/latest | grep tag_name | cut -d '"' -f 4)_Linux.tar.gz
-      tar -xzf ZAP_*.tar.gz -C $(Agent.ToolsDirectory)/zap
+      wget https://github.com/zaproxy/zaproxy/releases/download/$zapVersion/ZAP_$zapVersion_Linux.tar.gz
+      tar -xzf ZAP_$zapVersion_Linux.tar.gz -C $(Agent.ToolsDirectory)/zap
 
       # Set environment variables
       echo 'export PATH=$PATH:$(Agent.ToolsDirectory)/zap' >> ~/.bashrc
@@ -27,22 +30,22 @@ jobs:
   steps:
   - script: |
       # Ensure zap.sh is in the correct directory
-      if [ -e "$(Agent.ToolsDirectory)/zap/ZAP_$(zapVersion)/zap.sh" ]; then
-        echo "ZAP script found at $(Agent.ToolsDirectory)/zap/ZAP_$(zapVersion)/zap.sh"
+      if [ -e "$(Agent.ToolsDirectory)/zap/ZAP_$zapVersion/zap.sh" ]; then
+        echo "ZAP script found at $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion/zap.sh"
       else
         echo "ZAP script not found!"
         exit 1
       fi
 
       # Start ZAP in daemon mode (headless)
-      $(Agent.ToolsDirectory)/zap/ZAP_$(zapVersion)/zap.sh -daemon -port 8080 -config api.disablekey=true
+      $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion/zap.sh -daemon -port 8080 -config api.disablekey=true
 
       # Spider and scan your website (modify the website URL as needed)
-      $(Agent.ToolsDirectory)/zap/ZAP_$(zapVersion)/zap-cli -p 8080 -z "spider target=http://localhost:8089/ recurse=1 maxchildren=10"
-      $(Agent.ToolsDirectory)/zap/ZAP_$(zapVersion)/zap-cli -p 8080 -z "active-scan target=http://localhost:8089/ recurse=1 maxchildren=10"
+      $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion/zap-cli -p 8080 -z "spider target=http://localhost:8089/ recurse=1 maxchildren=10"
+      $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion/zap-cli -p 8080 -z "active-scan target=http://localhost:8089/ recurse=1 maxchildren=10"
 
       # Generate a ZAP report in NUnit XML format
-      $(Agent.ToolsDirectory)/zap/ZAP_$(zapVersion)/zap-cli -p 8080 -z "report -o zap-report.xml -f nunit-xml"
+      $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion/zap-cli -p 8080 -z "report -o zap-report.xml -f nunit-xml"
 
       # Optional: Save the report as an artifact
       mv zap-report.xml $(Build.ArtifactStagingDirectory)/
