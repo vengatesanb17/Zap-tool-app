@@ -1,11 +1,11 @@
 trigger:
-- main  # Change to 'main' or your desired branch
+- main
 
 pool:
   vmImage: 'ubuntu-latest'
 
 jobs:
-- job: TestWebsiteWithZap
+- job: InstallZap
   steps:
   - script: |
       # Update the package list
@@ -21,8 +21,19 @@ jobs:
       wget https://github.com/zaproxy/zaproxy/releases/download/$zapVersion/ZAP_$zapVersion_Linux.tar.gz
       tar -xzf ZAP_$zapVersion_Linux.tar.gz -C $(Agent.ToolsDirectory)/zap
 
+      # List the contents of the ZAP installation directory for debugging
+      ls -la $(Agent.ToolsDirectory)/zap
+
       # Set environment variables
       echo 'export PATH=$PATH:$(Agent.ToolsDirectory)/zap/ZAP_$zapVersion' >> ~/.bashrc
+    displayName: 'Install ZAP Tool'
+
+- job: TestWebsiteWithZap
+  dependsOn: InstallZap
+  steps:
+  - script: |
+      # List the contents of the ZAP installation directory for debugging
+      ls -la $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion
 
       # Start ZAP in daemon mode (headless)
       $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion/zap.sh -daemon -port 8080 -config api.disablekey=true
@@ -30,12 +41,18 @@ jobs:
       # Wait for ZAP to start
       sleep 10
 
+      # List the contents of the ZAP installation directory again for debugging
+      ls -la $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion
+
       # Spider and scan your website (modify the website URL as needed)
       $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion/zap-cli -p 8080 -z "spider target=http://localhost:8089/ recurse=1 maxchildren=10"
       $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion/zap-cli -p 8080 -z "active-scan target=http://localhost:8089/ recurse=1 maxchildren=10"
 
       # Generate a ZAP report in NUnit XML format
       $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion/zap-cli -p 8080 -z "report -o zap-report.xml -f nunit-xml"
+
+      # List the contents of the ZAP installation directory one more time for debugging
+      ls -la $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion
 
       # Optional: Save the report as an artifact
       mv zap-report.xml $(Build.ArtifactStagingDirectory)/
@@ -45,7 +62,7 @@ jobs:
       from org.zaproxy.zap.extension.script import ScriptVars
       
       # Define the target URL to test
-      target_url = "http://localhost:8089/"  # Replace with your target URL
+      target_url="http://localhost:8089/"  # Replace with your target URL
 
       # Get the current ZAP script context
       context = org.parosproxy.paros.control.Control.getSingleton().getExtensionLoader().getExtension(
@@ -71,18 +88,8 @@ jobs:
 
       # Exit the script
       exit()
-    displayName: 'Test Website with ZAP'
+    displayName: 'Run ZAP Scan'
 
   - publish: $(Build.ArtifactStagingDirectory)
     artifact: 'zap-reports'
     displayName: 'Publish ZAP Reports'
-
-- job: PublishNUnitReport
-  dependsOn: TestWebsiteWithZap
-  steps:
-  - task: PublishTestResults@2
-    inputs:
-      testResultsFiles: '$(Build.ArtifactStagingDirectory)/zap-report.xml'
-      testRunTitle: 'ZAP Scan'
-      testRunSystem: 'ZAP'
-    displayName: 'Publish ZAP Test Results'
