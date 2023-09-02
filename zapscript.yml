@@ -14,17 +14,18 @@ jobs:
       # Install OpenJDK (Java is required for ZAP)
       sudo apt-get install -y openjdk-11-jdk
 
-      # Add the ZAP repository and its key
-      sudo apt-add-repository ppa:webupd8team/java
-      sudo apt-get update
+      # Define the desired ZAP version
+      zapVersion="2.10.0"  # Update to the desired ZAP version
 
-      # Accept the Oracle license (you might need to manually agree)
-      echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
-      echo debconf shared/accepted-oracle-license-v1-1 seen true | sudo debconf-set-selections
+      # Download and unzip ZAP
+      wget https://github.com/zaproxy/zaproxy/releases/download/$zapVersion/ZAP_$zapVersion_Linux.tar.gz
+      tar -xzf ZAP_$zapVersion_Linux.tar.gz -C $(Agent.ToolsDirectory)/zap
 
-      # Install ZAP
-      sudo apt-get install -y zaproxy
+      # List the contents of the ZAP installation directory for debugging
+      ls -la $(Agent.ToolsDirectory)/zap
 
+      # Set environment variables
+      echo 'export PATH=$PATH:$(Agent.ToolsDirectory)/zap/ZAP_$zapVersion' >> ~/.bashrc
     displayName: 'Install ZAP Tool'
     
 - job: TestWebsiteWithZap
