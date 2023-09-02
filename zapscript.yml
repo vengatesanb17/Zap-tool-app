@@ -1,11 +1,11 @@
 trigger:
-- main
+- main  # Change to 'main' or your desired branch
 
 pool:
   vmImage: 'ubuntu-latest'
 
 jobs:
-- job: InstallZap
+- job: TestWebsiteWithZap
   steps:
   - script: |
       # Update the package list
@@ -23,22 +23,12 @@ jobs:
 
       # Set environment variables
       echo 'export PATH=$PATH:$(Agent.ToolsDirectory)/zap/ZAP_$zapVersion' >> ~/.bashrc
-    displayName: 'Install ZAP Tool'
-
-- job: TestWebsiteWithZap
-  dependsOn: InstallZap
-  steps:
-  - script: |
-      # Ensure zap.sh is in the correct directory
-      if [ -e "$(Agent.ToolsDirectory)/zap/ZAP_$zapVersion/zap.sh" ]; then
-        echo "ZAP script found at $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion/zap.sh"
-      else
-        echo "ZAP script not found!"
-        exit 1
-      fi
 
       # Start ZAP in daemon mode (headless)
       $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion/zap.sh -daemon -port 8080 -config api.disablekey=true
+
+      # Wait for ZAP to start
+      sleep 10
 
       # Spider and scan your website (modify the website URL as needed)
       $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion/zap-cli -p 8080 -z "spider target=http://localhost:8089/ recurse=1 maxchildren=10"
