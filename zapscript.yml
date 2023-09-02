@@ -1,5 +1,5 @@
 trigger:
-- main
+- master
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -15,20 +15,23 @@ steps:
     unzip ZAP_$(zapVersion)_Core.zip -d zap
     export PATH=$PATH:$(Agent.TempDirectory)/zap
 
+    # Grant execute permissions to zap.sh
+    chmod +x $(Agent.TempDirectory)/zap/zap.sh
+
     # Start ZAP in headless mode
-    zap.sh -daemon -port 8080 -config api.disablekey=true -config scanner.attackOnStart=true -addoninstall ascanrulesBeta -addoninstall pscanrulesBeta -addoninstall wappalyzer -addoninstall psnarules
+    $(Agent.TempDirectory)/zap/zap.sh -daemon -port 8080 -config api.disablekey=true -config scanner.attackOnStart=true -addoninstall ascanrulesBeta -addoninstall pscanrulesBeta -addoninstall wappalyzer -addoninstall psnarules
 
     # Spider and scan your website
-    zap-cli -p 8080 -z "spider target=$(websiteUrl) recurse=1 maxchildren=10"
-    zap-cli -p 8080 -z "active-scan target=$(websiteUrl) recurse=1 maxchildren=10"
+    $(Agent.TempDirectory)/zap/zap-cli -p 8080 -z "spider target=$(websiteUrl) recurse=1 maxchildren=10"
+    $(Agent.TempDirectory)/zap/zap-cli -p 8080 -z "active-scan target=$(websiteUrl) recurse=1 maxchildren=10"
 
     # Generate the ZAP report in NUnit XML format
-    zap-cli -p 8080 -z "report -o zap-report.xml -f nunit-xml"
+    $(Agent.TempDirectory)/zap/zap-cli -p 8080 -z "report -o $(Agent.TempDirectory)/zap-report.xml -f nunit-xml"
   displayName: 'Run ZAP Scan and Generate Report'
 
 - task: PublishTestResults@2
   inputs:
-    testResultsFiles: 'zap-report.xml'
+    testResultsFiles: '$(Agent.TempDirectory)/zap-report.xml'
     testRunTitle: 'ZAP Scan'
     testRunSystem: 'ZAP'
     searchFolder: '$(Agent.TempDirectory)'
