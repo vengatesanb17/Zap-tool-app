@@ -21,28 +21,19 @@ jobs:
       wget https://github.com/zaproxy/zaproxy/releases/download/$zapVersion/ZAP_$zapVersion_Linux.tar.gz
       tar -xzf ZAP_$zapVersion_Linux.tar.gz -C $(Agent.ToolsDirectory)/zap
 
-      # List the contents of the ZAP installation directory for debugging
-      ls -la $(Agent.ToolsDirectory)/zap
-
-      # Set environment variables
-      echo 'export PATH=$PATH:$(Agent.ToolsDirectory)/zap/ZAP_$zapVersion' >> ~/.bashrc
+      # Set executable permissions for ZAP script
+      chmod +x $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion/zap.sh
     displayName: 'Install ZAP Tool'
 
 - job: TestWebsiteWithZap
   dependsOn: InstallZap
   steps:
   - script: |
-      # List the contents of the ZAP installation directory for debugging
-      ls -la $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion
-
       # Start ZAP in daemon mode (headless)
       $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion/zap.sh -daemon -port 8080 -config api.disablekey=true
 
       # Wait for ZAP to start
       sleep 10
-
-      # List the contents of the ZAP installation directory again for debugging
-      ls -la $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion
 
       # Spider and scan your website (modify the website URL as needed)
       $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion/zap-cli -p 8080 -z "spider target=http://localhost:8089/ recurse=1 maxchildren=10"
@@ -51,45 +42,16 @@ jobs:
       # Generate a ZAP report in NUnit XML format
       $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion/zap-cli -p 8080 -z "report -o zap-report.xml -f nunit-xml"
 
-      # List the contents of the ZAP installation directory one more time for debugging
-      ls -la $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion
-
       # Optional: Save the report as an artifact
       mv zap-report.xml $(Build.ArtifactStagingDirectory)/
-
-      # ZAP test script
-      # Import the ZAP libraries
-      from org.zaproxy.zap.extension.script import ScriptVars
-      
-      # Define the target URL to test
-      target_url="http://localhost:8089/"  # Replace with your target URL
-
-      # Get the current ZAP script context
-      context = org.parosproxy.paros.control.Control.getSingleton().getExtensionLoader().getExtension(
-          org.zaproxy.zap.extension.script.ExtensionScript.class
-      ).getScriptContext()
-
-      # Set the target URL in ZAP's "target" context
-      context.setVariable(ScriptVars.TARGET, target_url)
-
-      # Start an active scan
-      zap.ascan.scan(target_url, "True", "True", "False", "", "", "")
-
-      # Wait for the active scan to complete (adjust the timeout as needed)
-      zap.ascan.wait_for_scan_to_finish(target_url, 0, 0, 600)
-
-      # Report the scan results
-      alerts = zap.core.alerts(baseurl=target_url)
-      for alert in alerts:
-          print("Alert: " + alert.getRisk() + " - " + alert.getName() + " - " + alert.getDescription())
-
-      # Save the ZAP session if needed
-      # zap.core.save_session("path/to/save/session.zap")
-
-      # Exit the script
-      exit()
     displayName: 'Run ZAP Scan'
 
-  - publish: $(Build.ArtifactStagingDirectory)
-    artifact: 'zap-reports'
-    displayName: 'Publish ZAP Reports'
+- job: PublishNUnitReport
+  dependsOn: TestWebsiteWithZap
+  steps:
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFiles: '$(Build.ArtifactStagingDirectory)/zap-report.xml'
+      testRunTitle: 'ZAP Scan'
+      testRunSystem: 'ZAP'
+    displayName: 'Publish ZAP Test Results'
