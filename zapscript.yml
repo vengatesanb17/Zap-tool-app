@@ -26,15 +26,23 @@ jobs:
   dependsOn: InstallZap
   steps:
   - script: |
+      # Ensure zap.sh is in the correct directory
+      if [ -e "$(Agent.ToolsDirectory)/zap/ZAP_$(zapVersion)/zap.sh" ]; then
+        echo "ZAP script found at $(Agent.ToolsDirectory)/zap/ZAP_$(zapVersion)/zap.sh"
+      else
+        echo "ZAP script not found!"
+        exit 1
+      fi
+
       # Start ZAP in daemon mode (headless)
-      zap.sh -daemon -port 8080 -config api.disablekey=true
+      $(Agent.ToolsDirectory)/zap/ZAP_$(zapVersion)/zap.sh -daemon -port 8080 -config api.disablekey=true
 
       # Spider and scan your website (modify the website URL as needed)
-      zap-cli -p 8080 -z "spider target=http://localhost:8089/ recurse=1 maxchildren=10"
-      zap-cli -p 8080 -z "active-scan target=http://localhost:8089/ recurse=1 maxchildren=10"
+      $(Agent.ToolsDirectory)/zap/ZAP_$(zapVersion)/zap-cli -p 8080 -z "spider target=http://localhost:8089/ recurse=1 maxchildren=10"
+      $(Agent.ToolsDirectory)/zap/ZAP_$(zapVersion)/zap-cli -p 8080 -z "active-scan target=http://localhost:8089/ recurse=1 maxchildren=10"
 
       # Generate a ZAP report in NUnit XML format
-      zap-cli -p 8080 -z "report -o zap-report.xml -f nunit-xml"
+      $(Agent.ToolsDirectory)/zap/ZAP_$(zapVersion)/zap-cli -p 8080 -z "report -o zap-report.xml -f nunit-xml"
 
       # Optional: Save the report as an artifact
       mv zap-report.xml $(Build.ArtifactStagingDirectory)/
