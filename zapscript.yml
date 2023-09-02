@@ -39,16 +39,17 @@ jobs:
       sleep 10
 
       # Spider and scan your website (modify the website URL as needed)
-      /opt/zap/zap-cli -p 8080 -z "spider target=http://localhost:8089/ recurse=1 maxchildren=10"
-      /opt/zap/zap-cli -p 8080 -z "active-scan target=http://localhost:8089/ recurse=1 maxchildren=10"
+      /opt/zap/zap-cli.sh -p 8080 -z "spider target=http://localhost:8089/ recurse=1 maxchildren=10"
+      /opt/zap/zap-cli.sh -p 8080 -z "active-scan target=http://localhost:8089/ recurse=1 maxchildren=10"
 
       # Generate a ZAP report in NUnit XML format
-      /opt/zap/zap-cli -p 8080 -z "report -o zap-report.xml -f nunit-xml"
+      /opt/zap/zap-cli.sh -p 8080 -z "report -o /home/vsts/work/zap-report.xml -f nunit-xml"
 
       # Optional: Save the report as an artifact
-      mv zap-report.xml $(Build.ArtifactStagingDirectory)/
+      mv /home/vsts/work/zap-report.xml $(Build.ArtifactStagingDirectory)/
 
     displayName: 'Run ZAP Scan'
+
 
 - job: PublishNUnitReport
   dependsOn: TestWebsiteWithZap
