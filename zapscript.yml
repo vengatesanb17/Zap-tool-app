@@ -22,7 +22,7 @@ jobs:
       tar -xzf ZAP_$zapVersion_Linux.tar.gz -C $(Agent.ToolsDirectory)/zap
 
       # Set environment variables
-      echo 'export PATH=$PATH:$(Agent.ToolsDirectory)/zap' >> ~/.bashrc
+      echo 'export PATH=$PATH:$(Agent.ToolsDirectory)/zap/ZAP_$zapVersion' >> ~/.bashrc
     displayName: 'Install ZAP Tool'
 
 - job: TestWebsiteWithZap
