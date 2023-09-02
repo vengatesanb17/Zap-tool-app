@@ -49,6 +49,38 @@ jobs:
 
       # Optional: Save the report as an artifact
       mv zap-report.xml $(Build.ArtifactStagingDirectory)/
+
+      # ZAP test script
+      # Import the ZAP libraries
+      from org.zaproxy.zap.extension.script import ScriptVars
+      
+      # Define the target URL to test
+      target_url = "http://localhost:8089/"  # Replace with your target URL
+
+      # Get the current ZAP script context
+      context = org.parosproxy.paros.control.Control.getSingleton().getExtensionLoader().getExtension(
+          org.zaproxy.zap.extension.script.ExtensionScript.class
+      ).getScriptContext()
+
+      # Set the target URL in ZAP's "target" context
+      context.setVariable(ScriptVars.TARGET, target_url)
+
+      # Start an active scan
+      zap.ascan.scan(target_url, "True", "True", "False", "", "", "")
+
+      # Wait for the active scan to complete (adjust the timeout as needed)
+      zap.ascan.wait_for_scan_to_finish(target_url, 0, 0, 600)
+
+      # Report the scan results
+      alerts = zap.core.alerts(baseurl=target_url)
+      for alert in alerts:
+          print("Alert: " + alert.getRisk() + " - " + alert.getName() + " - " + alert.getDescription())
+
+      # Save the ZAP session if needed
+      # zap.core.save_session("path/to/save/session.zap")
+
+      # Exit the script
+      exit()
     displayName: 'Test Website with ZAP'
 
   - publish: $(Build.ArtifactStagingDirectory)
