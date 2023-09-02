@@ -33,20 +33,21 @@ jobs:
   steps:
   - script: |
       # Start ZAP in daemon mode (headless)
-      $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion/zap.sh -daemon -port 8080 -config api.disablekey=true
+      /opt/zap/zap.sh -daemon -port 8080 -config api.disablekey=true
 
       # Wait for ZAP to start
       sleep 10
 
       # Spider and scan your website (modify the website URL as needed)
-      $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion/zap-cli -p 8080 -z "spider target=http://localhost:8089/ recurse=1 maxchildren=10"
-      $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion/zap-cli -p 8080 -z "active-scan target=http://localhost:8089/ recurse=1 maxchildren=10"
+      /opt/zap/zap-cli -p 8080 -z "spider target=http://localhost:8089/ recurse=1 maxchildren=10"
+      /opt/zap/zap-cli -p 8080 -z "active-scan target=http://localhost:8089/ recurse=1 maxchildren=10"
 
       # Generate a ZAP report in NUnit XML format
-      $(Agent.ToolsDirectory)/zap/ZAP_$zapVersion/zap-cli -p 8080 -z "report -o zap-report.xml -f nunit-xml"
+      /opt/zap/zap-cli -p 8080 -z "report -o zap-report.xml -f nunit-xml"
 
       # Optional: Save the report as an artifact
       mv zap-report.xml $(Build.ArtifactStagingDirectory)/
+
     displayName: 'Run ZAP Scan'
 
 - job: PublishNUnitReport
