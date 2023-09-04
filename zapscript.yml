@@ -16,7 +16,7 @@ steps:
   inputs:
     threshold: '200'
     scantype: 'targetedScan'
-    url: 'http://localhost:8089/'
+    url: 'https://dotnetzap.azurewebsites.net/'
 
 
 - task: PublishBuildArtifacts@1
