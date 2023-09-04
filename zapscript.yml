@@ -30,24 +30,12 @@ jobs:
     
 - job: TestWebsiteWithZap
   dependsOn: InstallZap
-  steps:
-  - script: |
-      # Start ZAP in daemon mode (headless)
-      /opt/zap/zap.sh -daemon -port 8080 -config api.disablekey=true
-
-      # Wait for ZAP to start
-      sleep 10
-
-      # Spider and scan your website (modify the website URL as needed)
-      /opt/zap/zap-cli.sh -p 8080 -z "spider target=http://localhost:8089/ recurse=1 maxchildren=10"
-      /opt/zap/zap-cli.sh -p 8080 -z "active-scan target=http://localhost:8089/ recurse=1 maxchildren=10"
-
-      # Generate a ZAP report in NUnit XML format
-      /opt/zap/zap-cli.sh -p 8080 -z "report -o /home/vsts/work/zap-report.xml -f nunit-xml"
-
-      # Optional: Save the report as an artifact
-      mv /home/vsts/work/zap-report.xml $(Build.ArtifactStagingDirectory)/
-
+steps:
+- bash: |
+   chmod -R 777  ./
+   docker run --rm -v $(pwd):/zap/wrk/:rw -t owasp/zap2docker-stable zap-full-scan.py -t http://localhost:8089/ -g gen.conf -x OWASP-ZAP-Report.xml -r scan-report.html
+   true
+  displayName: 'Bash Script'
     displayName: 'Run ZAP Scan'
 
 
