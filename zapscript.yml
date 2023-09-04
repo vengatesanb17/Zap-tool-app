@@ -14,7 +14,7 @@ steps:
   inputs:
     threshold: '200'
     scantype: 'targetedScan'
-    url: 'http://testphp.vulnweb.com/' # Replace with your target URL
+    url: 'https://dotnetzap.azurewebsites.net/' # Replace with your target URL
 
 # - task: owaspzap@1
 #   inputs:
