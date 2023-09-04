@@ -4,23 +4,19 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
 
 trigger:
-- none
+- main
 
 pool:
   vmImage: ubuntu-latest
 
+
 steps:
+
 - task: owaspzap@1
   inputs:
     threshold: '200'
     scantype: 'targetedScan'
-    url: 'https://dotnetzap.azurewebsites.net/' # Replace with your target URL
-
-# - task: owaspzap@1
-#   inputs:
-#     threshold: '200'
-#     scantype: 'targetedScan'
-#     url: 'http://localhost:8089/'
+    url: 'https://dotnetzap.azurewebsites.net/'
 
 
 - task: PublishBuildArtifacts@1
