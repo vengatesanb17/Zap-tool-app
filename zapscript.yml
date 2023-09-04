@@ -14,7 +14,13 @@ steps:
   inputs:
     threshold: '200'
     scantype: 'targetedScan'
-    url: 'http://localhost:8089/'
+    url: 'http://localhost:8089/' # Replace with your target URL
+
+# - task: owaspzap@1
+#   inputs:
+#     threshold: '200'
+#     scantype: 'targetedScan'
+#     url: 'http://localhost:8089/'
 
 
 - task: PublishBuildArtifacts@1
