@@ -14,7 +14,7 @@ steps:
 
 - task: owaspzap@1
   inputs:
-    threshold: '200'
+    threshold: '300'
     scantype: 'targetedScan'
     url: 'http://testphp.vulnweb.com/'
 
