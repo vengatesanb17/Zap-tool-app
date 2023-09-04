@@ -4,14 +4,12 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
 
 trigger:
-- master
+- main
 
 pool:
   vmImage: ubuntu-latest
 
-
 steps:
-
 - task: owaspzap@1
   inputs:
     threshold: '200'
