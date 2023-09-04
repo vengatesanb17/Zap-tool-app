@@ -16,7 +16,7 @@ steps:
   inputs:
     threshold: '200'
     scantype: 'targetedScan'
-    url: 'http://localhost:8089/'
+    url: 'http://testphp.vulnweb.com/'
 
 
 - task: PublishBuildArtifacts@1
