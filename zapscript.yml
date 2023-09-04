@@ -1,3 +1,8 @@
+# ASP.NET Core
+# Build and test ASP.NET Core projects targeting .NET Core.
+# Add steps that run tests, create a NuGet package, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
 trigger:
 - main
 
@@ -7,84 +12,84 @@ pool:
 steps:
 - task: owaspzap@1
   inputs:
-    threshold: '300'
+    threshold: '200'
     scantype: 'targetedScan'
     url: 'http://testphp.vulnweb.com/' # Replace with your target URL
 
-- script: |
-    # Create a directory to store the HTML report
-    mkdir -p $(System.DefaultWorkingDirectory)/owaspzap-report
 
-    # Create an HTML report file
-    cat <<EOF > $(System.DefaultWorkingDirectory)/owaspzap-report/index.html
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>OWASP ZAP Scan Results</title>
-        <style>
-            /* Add CSS styles for formatting here */
-            body {
-                font-family: Arial, sans-serif;
-            }
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-bottom: 20px;
-            }
-            th, td {
-                border: 1px solid #ccc;
-                padding: 8px;
-                text-align: left;
-            }
-            th {
-                background-color: #f2f2f2;
-            }
-            tr:nth-child(even) {
-                background-color: #f2f2f2;
-            }
-        </style>
-    </head>
-    <body>
-        <h1>OWASP ZAP Scan Results</h1>
-        <table>
-            <thead>
-                <tr>
-                    <th>Alert Name</th>
-                    <th>Description</th>
-                    <th>Solution</th>
-                    <th>Reference</th>
-                    <th>URI</th>
-                    <th>HTTP Method</th>
-                    <th>Evidence</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Use a loop to iterate through alerts and populate the table -->
-                <tr>
-                    <td>Alert 1</td>
-                    <td>Description of Alert 1</td>
-                    <td>Solution for Alert 1</td>
-                    <td>Reference for Alert 1</td>
-                    <td>/vulnerable-page</td>
-                    <td>GET</td>
-                    <td>No evidence available</td>
-                </tr>
-                <!-- Repeat this row structure for each alert -->
-            </tbody>
-        </table>
-    </body>
-    </html>
-    EOF
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(System.DefaultWorkingDirectory)/owaspzap'
+    ArtifactName: zap
 
-    # Publish the HTML report as a build artifact
-    echo "Publishing HTML report as an artifact..."
-    echo "##vso[artifact.upload containerfolder=owaspzap-report;artifactname=OWASPZAPReport;]$(System.DefaultWorkingDirectory)/owaspzap-report"
-  displayName: 'Generate and Publish HTML Report'
+
+- bash: |
+   sudo npm install -g handlebars-cmd
+
+   cat <<EOF > owaspzap/nunit-template.hbs
+   {{#each site}}
+
+   <test-run
+       id="2"
+       name="Owasp test"
+       start-time="{{../[@generated]}}"  >
+       <test-suite
+           id="{{@index}}"
+           type="Assembly"
+           name="{{[@name]}}"
+           result="Failed"
+           failed="{{alerts.length}}">
+           <attachments>
+               <attachment>
+                   <filePath>$(System.DefaultWorkingDirectory)/owaspzap</filePath>
+               </attachment>
+           </attachments>
+       {{#each alerts}}<test-case
+           id="{{@index}}"
+           name="{{alert}}"
+           result="Failed"
+           fullname="{{alert}}"
+           time="1">
+               <failure>
+                   <message>
+                       <![CDATA[{{{desc}}}]]>
+                   </message>
+                   <stack-trace>
+                       <![CDATA[
+   Solution:
+   {{{solution}}}
+
+   Reference:
+   {{{reference}}}
+
+   instances:{{#each instances}}
+   * {{uri}}
+       - {{method}}
+       {{#if evidence}}- {{{evidence}}}{{/if}}
+                       {{/each}}]]>
+                   </stack-trace>
+               </failure>
+       </test-case>
+       {{/each}}
+       </test-suite>
+   </test-run>
+   {{/each}}
+   EOF
+  displayName: 'owasp nunit template'
+  condition: always()
+- bash: ' handlebars owaspzap/report.json < owaspzap/nunit-template.hbs > owaspzap/test-results.xml'
+  displayName: 'generate nunit type file'
+  condition: always()
+
+
+- task: PublishTestResults@2
+  displayName: 'Publish Test Results **/TEST-*.xml'
+  inputs:
+    testResultsFormat: NUnit
+    testResultsFiles: 'owaspzap/test-results.xml'
   condition: always()
 
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: '$(System.DefaultWorkingDirectory)/owaspzap-report'
-    ArtifactName: 'OWASPZAPReport'
+    PathtoPublish: '$(System.DefaultWorkingDirectory)/owaspzap'
+    ArtifactName: 'ZAP Reports'
