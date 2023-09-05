@@ -12,10 +12,10 @@ pool:
 steps:
 - task: owaspzap@1
   inputs:
-    aggressivemode: false
-    threshold: '50'
+    aggressivemode: true
+    threshold: '300'
     scantype: 'targetedScan'
-    url: 'http://testphp.vulnweb.com/' # Replace with your target URL
+    url: 'https://owasp.org/www-project-webgoat/' # Replace with your target URL
 
 
 - task: PublishBuildArtifacts@1
