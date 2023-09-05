@@ -29,8 +29,7 @@ steps:
   inputs:
     aggressivemode: true
     threshold: '300'
-    provideCustomContext: true
-    contextPath: '/home/vsts/work/1/s/exclude-domains.js'
+    scriptname: '/home/vsts/work/1/s/exclude-domains.js'
     port: 'https://owasp.org/www-project-webgoat/'
   enabled: true
 
