@@ -22,40 +22,57 @@ steps:
     PathtoPublish: '$(System.DefaultWorkingDirectory)/owaspzap'
     ArtifactName: zap
 - bash: |
-        sudo npm install -g handlebars-cmd
-        sudo cat <<EOF > owaspzap/nunit-template.hbs
-        {{#each site}}
-        <test-run id="{{@index}}" name="{{@name}}" start-time="{{../[@generated]}}">
-          <test-suite id="{{@index}}" type="Assembly" name="{{@name}}">
-            {{#if alerts.length}}
-            <test-suite-result result="Failed" success="False"></test-suite-result>
-            {{else}}
-            <test-suite-result result="Passed" success="True"></test-suite-result>
-            {{/if}}
-            {{#each alerts}}
-            <test-case id="{{@index}}" name="{{alert}}" result="Failed" fullname="{{alert}}" time="1">
-              <failure>
-                <message><![CDATA[{{desc}}]]></message>
-                <stack-trace><![CDATA[
-        Solution:
-        {{solution}}
 
-        Reference:
-        {{reference}}
-
-        Instances:
-        {{#each instances}}
-          * URI: {{uri}}
-            - Method: {{method}}
-            {{#if evidence}}- Evidence: {{evidence}}{{/if}}
-        {{/each}}
-        ]]></stack-trace>
-              </failure>
-            </test-case>
+      sudo npm install -g handlebars-cmd
+          cat <<EOF > owaspzap/report.html
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>OWASP ZAP Security Scan Report</title>
+            <style>
+              /* Add your CSS styles here */
+              body {
+                font-family: Arial, sans-serif;
+                margin: 20px;
+              }
+              .alert {
+                border: 1px solid #FF0000;
+                background-color: #FFE6E6;
+                padding: 10px;
+                margin-bottom: 10px;
+              }
+            </style>
+          </head>
+          <body>
+            <h1>OWASP ZAP Security Scan Report</h1>
+            {{#each site}}
+            <div class="alert">
+              <h2>{{@name}}</h2>
+              <p><strong>Scan Date:</strong> {{../[@generated]}}</p>
+              {{#each alerts}}
+              <div class="alert">
+                <h3>{{alert}}</h3>
+                <p><strong>Description:</strong> {{desc}}</p>
+                <p><strong>Solution:</strong> {{solution}}</p>
+                <p><strong>Reference:</strong> {{reference}}</p>
+                <p><strong>Instances:</strong></p>
+                <ul>
+                  {{#each instances}}
+                  <li>
+                    <strong>URI:</strong> {{uri}}<br>
+                    <strong>Method:</strong> {{method}}<br>
+                    {{#if evidence}}<strong>Evidence:</strong> {{evidence}}<br>{{/if}}
+                  </li>
+                  {{/each}}
+                </ul>
+              </div>
+              {{/each}}
+            </div>
             {{/each}}
-          </test-suite>
-        </test-run>
-        {{/each}}
+          </body>
+          </html>
+          EOF
+        displayName: 'Generate OWASP ZAP HTML Report'
 
 
   displayName: 'owasp nunit template'
