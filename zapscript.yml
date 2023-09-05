@@ -24,7 +24,7 @@ steps:
     threshold: '200'
     scantype: 'SpiderScan'
     url: 'http://testphp.vulnweb.com/' # Replace with your target URL
-
+    scriptname: 'exclude-domains.js'
 
 - task: PublishBuildArtifacts@1
   inputs:
