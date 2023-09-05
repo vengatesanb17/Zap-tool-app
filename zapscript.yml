@@ -26,6 +26,23 @@ steps:
     url: 'http://testphp.vulnweb.com/' # Replace with your target URL
     scriptname: 'exclude-domains.js'
 
+- script: |
+    # Start OWASP ZAP in daemon mode and listen on a specific port (e.g., 8080)
+    zap.sh -daemon -port 8080
+
+    # Configure your application or HTTP client to use ZAP as a proxy
+    # Replace 172.17.0.1 with the actual IP address of your ZAP instance
+    export http_proxy=http://172.17.0.1:8080
+    export https_proxy=http://172.17.0.1:8080
+
+    # Run your application or make HTTP requests to http://172.17.0.1:80
+    # ZAP will intercept and scan the traffic
+
+    # Stop OWASP ZAP when done
+    zap.sh -cmd -shutdown
+  displayName: 'Run OWASP ZAP as a Proxy'
+  condition: succeededOrFailed()
+
 - task: PublishBuildArtifacts@1
   inputs:
     PathtoPublish: '$(System.DefaultWorkingDirectory)/owaspzap'
