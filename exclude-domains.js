@@ -3,7 +3,7 @@ function scanNode(s) {
     if (s.isInScope()) {
         // Define an array of domains to exclude
         var excludedDomains = [
-            "https://172.17.0.1/",
+            "www.complain.com",
             // Add more domains to exclude as needed
         ];
 
