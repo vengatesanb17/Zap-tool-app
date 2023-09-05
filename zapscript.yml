@@ -15,6 +15,7 @@ steps:
     aggressivemode: true
     threshold: '300'
     scantype: targetedScan
+    scriptname: 'exclude-domain.js'
     url: 'https://owasp.org/www-project-webgoat/' # Replace with your target URL
 
 
