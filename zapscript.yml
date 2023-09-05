@@ -10,18 +10,11 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-
-- task: CopyFiles@2
-  inputs:
-    SourceFolder: '$(Build.ArtifactStagingDirectory)'
-    Contents: '**/*.js'  # You can specify the file pattern to match the files you want to copy.
-    TargetFolder: '$(Build.ArtifactStagingDirectory)/copied-reports'  # Specify the target folder where the files will be copied.
-
 - task: owaspzap@1
   inputs:
     aggressivemode: true
     threshold: '50'
-    scantype: 'Active Scan'
+    scantype: 'Ajax Spider'
     url: 'http://testphp.vulnweb.com/' # Replace with your target URL
     scriptname: 'exclude-domains.js'
 
