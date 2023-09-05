@@ -21,68 +21,16 @@ steps:
   inputs:
     PathtoPublish: '$(System.DefaultWorkingDirectory)/owaspzap'
     ArtifactName: zap
-- bash: |
-      #!/bin/bash
 
-      # Install handlebars-cmd globally
-      sudo npm install -g handlebars-cmd
+- script: |
+    dotnet tool install -g owasp-zap-api
+    dotnet zap-api start -v -p 8080 -d -quickurl http://testphp.vulnweb.com/
+    dotnet zap-api quick-scan -t http://testphp.vulnweb.com/
+    dotnet zap-api generate-report -f html -o $(Build.ArtifactStagingDirectory)/zap-report.html
+    dotnet zap-api shutdown
+  displayName: 'Run OWASP ZAP Scan'
+  condition: succeededOrFailed()
 
-      # Create the Handlebars template file
-      cat <<EOF > ~/owasp_report.html
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>OWASP ZAP Security Scan Report</title>
-        <style>
-          /* Add your CSS styles here */
-          body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-          }
-          .alert {
-            border: 1px solid #FF0000;
-            background-color: #FFE6E6;
-            padding: 10px;
-            margin-bottom: 10px;
-          }
-        </style>
-      </head>
-      <body>
-        <h1>OWASP ZAP Security Scan Report</h1>
-        {{#each site}}
-        <div class="alert">
-          <h2>{{@name}}</h2>
-          <p><strong>Scan Date:</strong> {{../[@generated]}}</p>
-          {{#each alerts}}
-          <div class="alert">
-            <h3>{{alert}}</h3>
-            <p><strong>Description:</strong> {{desc}}</p>
-            <p><strong>Solution:</strong> {{solution}}</p>
-            <p><strong>Reference:</strong> {{reference}}</p>
-            <p><strong>Instances:</strong></p>
-            <ul>
-              {{#each instances}}
-              <li>
-                <strong>URI:</strong> {{uri}}<br>
-                <strong>Method:</strong> {{method}}<br>
-                {{#if evidence}}<strong>Evidence:</strong> {{evidence}}<br>{{/if}}
-              </li>
-              {{/each}}
-            </ul>
-          </div>
-          {{/each}}
-        </div>
-        {{/each}}
-      </body>
-      </html>
-      EOF
-
-      # Move the report to the desired location
-      mv ~/owasp_report.html ~/owaspzap/report.html
-
-
-
-  displayName: 'owasp nunit template'
   condition: always()
 - bash: ' handlebars owaspzap/report.json < owaspzap/nunit-template.hbs > owaspzap/test-results.xml'
   displayName: 'generate nunit type file'
