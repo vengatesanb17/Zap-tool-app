@@ -29,9 +29,9 @@ steps:
   inputs:
     aggressivemode: true
     threshold: '300'
-    scantype: agentScan
-    contextPath: /home/vsts/work/1/s/exclude-domains.js
-    port: 'https://owasp.org/www-project-webgoat/'# Replace with your target URL
+    provideCustomContext: true
+    contextPath: '/home/vsts/work/1/s/exclude-domains.js'
+    port: 'https://owasp.org/www-project-webgoat/'
   enabled: true
 
 - task: PublishBuildArtifacts@1
