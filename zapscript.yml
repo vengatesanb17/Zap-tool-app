@@ -17,9 +17,13 @@ steps:
     Contents: '**/*.js'  # You can specify the file pattern to match the files you want to copy.
     TargetFolder: '$(Build.ArtifactStagingDirectory)/copied-reports'  # Specify the target folder where the files will be copied.
     CleanTargetFolder: true 
-    
+
 - script: |
-    # Start OWASP ZAP in daemon mode and listen on a specific port (e.g., 8080)
+    # Install OWASP ZAP
+    apt-get update
+    apt-get install -y owasp-zap
+
+    # Start OWASP ZAP in daemon mode and listen on port 8080
     zap.sh -daemon -port 8080
 
     # Configure your application or HTTP client to use ZAP as a proxy
