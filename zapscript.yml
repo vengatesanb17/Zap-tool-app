@@ -14,7 +14,7 @@ steps:
   inputs:
     aggressivemode: true
     threshold: '300'
-    scantype: 'activeScan'
+    scantype: targetedScan
     url: 'https://owasp.org/www-project-webgoat/' # Replace with your target URL
 
 
