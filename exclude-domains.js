@@ -4,7 +4,7 @@ function scanNode(s) {
         // Define an array of domains to exclude
         var excludedDomains = [
             "https://172.17.0.1/",
-            "http://172.17.0.1:80/",
+            "https://172.17.0.1/auth.html",
             // Add more domains to exclude as needed
         ];
 
