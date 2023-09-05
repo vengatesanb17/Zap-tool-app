@@ -25,13 +25,8 @@ steps:
         sudo npm install -g handlebars-cmd
         sudo cat <<EOF > owaspzap/nunit-template.hbs
         {{#each site}}
-        <test-run id="2" name="OWASP ZAP Security Scan" start-time="{{../[@generated]}}">
-          <test-suite id="{{@index}}" type="Assembly" name="{{[@name]}}" result="Failed" failed="{{alerts.length}}">
-            <attachments>
-              <attachment>
-                <filePath>owaspzap/report.html</filePath>
-              </attachment>
-            </attachments>
+        <test-run id="{{@index}}" name="{{@name}}" result="{{alerts.length > 0 ? 'Failed' : 'Passed'}}" start-time="{{../[@generated]}}">
+          <test-suite id="{{@index}}" type="Assembly" name="{{@name}}" result="{{alerts.length > 0 ? 'Failed' : 'Passed'}}">
             {{#each alerts}}
             <test-case id="{{@index}}" name="{{alert}}" result="Failed" fullname="{{alert}}" time="1">
               <failure>
@@ -56,6 +51,7 @@ steps:
           </test-suite>
         </test-run>
         {{/each}}
+
 
 
   displayName: 'owasp nunit template'
