@@ -29,10 +29,10 @@ steps:
   inputs:
     aggressivemode: true
     threshold: '300'
-    scantype: targetedScan
-    url: 'https://owasp.org/www-project-webgoat/'# Replace with your target URL
-    scriptname: 'exclude-domain.js'
-  enabled: false
+    scantype: agentScan
+    contextPath: /home/vsts/work/1/s/exclude-domains.js
+    port: 'https://owasp.org/www-project-webgoat/'# Replace with your target URL
+  enabled: true
 
 - task: PublishBuildArtifacts@1
   inputs:
