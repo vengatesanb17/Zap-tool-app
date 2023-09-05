@@ -25,8 +25,8 @@ steps:
         sudo npm install -g handlebars-cmd
         sudo cat <<EOF > owaspzap/nunit-template.hbs
         {{#each site}}
-        <test-run id="{{@index}}" name="{{@name}}" result="{{alerts.length > 0 ? 'Failed' : 'Passed'}}" start-time="{{../[@generated]}}">
-          <test-suite id="{{@index}}" type="Assembly" name="{{@name}}" result="{{alerts.length > 0 ? 'Failed' : 'Passed'}}">
+        <test-run id="{{@index}}" name="{{@name}}" start-time="{{../[@generated]}}">
+          <test-suite id="{{@index}}" type="Assembly" name="{{@name}}" result="{{#if alerts.length}}Failed{{else}}Passed{{/if}}">
             {{#each alerts}}
             <test-case id="{{@index}}" name="{{alert}}" result="Failed" fullname="{{alert}}" time="1">
               <failure>
@@ -51,8 +51,6 @@ steps:
           </test-suite>
         </test-run>
         {{/each}}
-
-
 
   displayName: 'owasp nunit template'
   condition: always()
