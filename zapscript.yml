@@ -18,14 +18,6 @@ steps:
     TargetFolder: '$(Build.ArtifactStagingDirectory)/copied-reports'  # Specify the target folder where the files will be copied.
     CleanTargetFolder: true 
     
-- task: owaspzap@1
-  inputs:
-    aggressivemode: true
-    threshold: '50'
-    scantype: 'Active Scan'
-    url: 'http://testphp.vulnweb.com/' # Replace with your target URL
-    scriptname: 'exclude-domains.js'
-
 - script: |
     # Start OWASP ZAP in daemon mode and listen on a specific port (e.g., 8080)
     zap.sh -daemon -port 8080
@@ -42,6 +34,14 @@ steps:
     zap.sh -cmd -shutdown
   displayName: 'Run OWASP ZAP as a Proxy'
   condition: succeededOrFailed()
+  
+- task: owaspzap@1
+  inputs:
+    aggressivemode: true
+    threshold: '50'
+    scantype: 'Active Scan'
+    url: 'http://testphp.vulnweb.com/' # Replace with your target URL
+    scriptname: 'exclude-domains.js'
 
 - task: PublishBuildArtifacts@1
   inputs:
