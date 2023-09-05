@@ -21,39 +21,41 @@ steps:
   inputs:
     PathtoPublish: '$(System.DefaultWorkingDirectory)/owaspzap'
     ArtifactName: zap
+- bash: |
+        sudo npm install -g handlebars-cmd
+        sudo cat <<EOF > owaspzap/nunit-template.hbs
+        {{#each site}}
+        <test-run id="2" name="OWASP ZAP Security Scan" start-time="{{../[@generated]}}">
+          <test-suite id="{{@index}}" type="Assembly" name="{{[@name]}}" result="Failed" failed="{{alerts.length}}">
+            <attachments>
+              <attachment>
+                <filePath>owaspzap/report.html</filePath>
+              </attachment>
+            </attachments>
+            {{#each alerts}}
+            <test-case id="{{@index}}" name="{{alert}}" result="Failed" fullname="{{alert}}" time="1">
+              <failure>
+                <message><![CDATA[{{desc}}]]></message>
+                <stack-trace><![CDATA[
+        Solution:
+        {{solution}}
 
-{{#each site}}
-<test-run id="2" name="OWASP ZAP Security Scan" start-time="{{../[@generated]}}">
-  <test-suite id="{{@index}}" type="Assembly" name="{{[@name]}}" result="Failed" failed="{{alerts.length}}">
-    <attachments>
-      <attachment>
-        <filePath>owaspzap/report.html</filePath>
-      </attachment>
-    </attachments>
-    {{#each alerts}}
-    <test-case id="{{@index}}" name="{{alert}}" result="Failed" fullname="{{alert}}" time="1">
-      <failure>
-        <message><![CDATA[{{desc}}]]></message>
-        <stack-trace><![CDATA[
-Solution:
-{{solution}}
+        Reference:
+        {{reference}}
 
-Reference:
-{{reference}}
-
-Instances:
-{{#each instances}}
-  * URI: {{uri}}
-    - Method: {{method}}
-    {{#if evidence}}- Evidence: {{evidence}}{{/if}}
-{{/each}}
-]]></stack-trace>
-      </failure>
-    </test-case>
-    {{/each}}
-  </test-suite>
-</test-run>
-{{/each}}
+        Instances:
+        {{#each instances}}
+          * URI: {{uri}}
+            - Method: {{method}}
+            {{#if evidence}}- Evidence: {{evidence}}{{/if}}
+        {{/each}}
+        ]]></stack-trace>
+              </failure>
+            </test-case>
+            {{/each}}
+          </test-suite>
+        </test-run>
+        {{/each}}
 
 
   displayName: 'owasp nunit template'
