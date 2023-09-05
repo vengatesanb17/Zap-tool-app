@@ -22,12 +22,10 @@ steps:
   inputs:
     aggressivemode: true
     threshold: '200'
-    scantype: 'SpiderScan'
+    scantype: 'Attack Mode'
     url: 'http://testphp.vulnweb.com/' # Replace with your target URL
     scriptname: 'exclude-domains.js'
-- script: |
-    dotnet zap-api exclude-url -t http://172.17.0.1:80
-    dotnet zap-api add-alert -n "Excluded Domain Alert" -d "Domain http://172.17.0.1:80 was excluded from scanning." -c "High" -w "http://172.17.0.1:80"
+
 - task: PublishBuildArtifacts@1
   inputs:
     PathtoPublish: '$(System.DefaultWorkingDirectory)/owaspzap'
