@@ -30,7 +30,7 @@ steps:
     aggressivemode: true
     threshold: '300'
     scriptname: '/home/vsts/work/1/s/exclude-domains.js'
-    port: 'https://owasp.org/www-project-webgoat/'
+    port: 'https://owasp.org/www-project-juice-shop/'
   enabled: true
 
 - task: PublishBuildArtifacts@1
