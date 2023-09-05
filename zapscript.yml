@@ -21,7 +21,7 @@ steps:
 - task: owaspzap@1
   inputs:
     aggressivemode: true
-    threshold: '200'
+    threshold: '50'
     scantype: 'Active Scan'
     url: 'http://testphp.vulnweb.com/' # Replace with your target URL
     scriptname: 'exclude-domains.js'
