@@ -23,9 +23,8 @@ steps:
     ArtifactName: zap
 
 {{#each site}}
-<test-run id="2" name="OWASP ZAP Scan Results" start-time="{{../@generated}}">
-  {{#if alerts.length}}
-  <test-suite id="{{@index}}" type="OWASP ZAP Scan" name="{{@name}}" result="Failed">
+<test-run id="2" name="OWASP ZAP Security Scan" start-time="{{../[@generated]}}">
+  <test-suite id="{{@index}}" type="Assembly" name="{{[@name]}}" result="Failed" failed="{{alerts.length}}">
     <attachments>
       <attachment>
         <filePath>owaspzap/report.html</filePath>
@@ -34,33 +33,28 @@ steps:
     {{#each alerts}}
     <test-case id="{{@index}}" name="{{alert}}" result="Failed" fullname="{{alert}}" time="1">
       <failure>
-        <message>
-          <![CDATA[
-            Description: {{desc}}
-            Solution: {{solution}}
-            Reference: {{reference}}
-          ]]>
-        </message>
-        <stack-trace>
-          <![CDATA[
-            Instances:
-            {{#each instances}}
-              * URI: {{uri}}
-                - Method: {{method}}
-                {{#if evidence}}- Evidence: {{{evidence}}}{{/if}}
-            {{/each}}
-          ]]>
-        </stack-trace>
+        <message><![CDATA[{{desc}}]]></message>
+        <stack-trace><![CDATA[
+Solution:
+{{solution}}
+
+Reference:
+{{reference}}
+
+Instances:
+{{#each instances}}
+  * URI: {{uri}}
+    - Method: {{method}}
+    {{#if evidence}}- Evidence: {{evidence}}{{/if}}
+{{/each}}
+]]></stack-trace>
       </failure>
     </test-case>
     {{/each}}
   </test-suite>
-  {{else}}
-  <test-suite id="{{@index}}" type="OWASP ZAP Scan" name="{{@name}}" result="Passed">
-  </test-suite>
-  {{/if}}
 </test-run>
 {{/each}}
+
 
   displayName: 'owasp nunit template'
   condition: always()
