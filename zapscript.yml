@@ -21,15 +21,55 @@ steps:
   inputs:
     PathtoPublish: '$(System.DefaultWorkingDirectory)/owaspzap'
     ArtifactName: zap
-
-- script: |
-    dotnet tool install -g owasp-zap-api
-    dotnet zap-api start -v -p 8080 -d -quickurl http://testphp.vulnweb.com/
-    dotnet zap-api quick-scan -t http://testphp.vulnweb.com/
-    dotnet zap-api generate-report -f html -o $(Build.ArtifactStagingDirectory)/zap-report.html
-    dotnet zap-api shutdown
-  displayName: 'Run OWASP ZAP Scan'
-  condition: succeededOrFailed()
+- bash: |
+   sudo npm install -g handlebars-cmd
+   cat <<EOF > owaspzap/nunit-template.hbs
+   {{#each site}}
+   <test-run
+       id="2"
+       name="Owasp test"
+       start-time="{{../[@generated]}}"  >
+       <test-suite
+           id="{{@index}}"
+           type="Assembly"
+           name="{{[@name]}}"
+           result="Failed"
+           failed="{{alerts.length}}">
+           <attachments>
+               <attachment>
+                   <filePath>owaspzap/report.html</filePath>
+               </attachment>
+           </attachments>
+       {{#each alerts}}<test-case
+           id="{{@index}}"
+           name="{{alert}}"
+           result="Failed"
+           fullname="{{alert}}"
+           time="1">
+               <failure>
+                   <message>
+                       <![CDATA[{{{desc}}}]]>
+                   </message>
+                   <stack-trace>
+                       <![CDATA[
+   Solution:
+   {{{solution}}}
+   Reference:
+   {{{reference}}}
+   instances:{{#each instances}}
+   * {{uri}}
+       - {{method}}
+       {{#if evidence}}- {{{evidence}}}{{/if}}
+                       {{/each}}]]>
+                   </stack-trace>
+               </failure>
+       </test-case>
+       {{/each}}
+       </test-suite>
+   </test-run>
+   {{/each}}
+   EOF
+  displayName: 'owasp nunit template'
 
 - bash: ' handlebars owaspzap/report.json < owaspzap/nunit-template.hbs > owaspzap/test-results.xml'
   displayName: 'generate nunit type file'
