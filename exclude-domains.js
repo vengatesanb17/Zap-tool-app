@@ -3,7 +3,7 @@ function scanNode(s) {
     if (s.isInScope()) {
         // Define an array of domains to exclude
         var excludedDomains = [
-            "www.complain.com",
+            "http://172.17.0.1:https://owasp.org/www-project-webgoat/",
             // Add more domains to exclude as needed
         ];
 
