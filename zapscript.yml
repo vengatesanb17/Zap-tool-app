@@ -13,8 +13,8 @@ steps:
 - task: owaspzap@1
   inputs:
     aggressivemode: true
-    threshold: '50'
-    scantype: 'targetedScan'
+    threshold: '300'
+    scantype: 'SpiderScan'
     url: 'https://owasp.org/www-project-webgoat/' # Replace with your target URL
 
 
