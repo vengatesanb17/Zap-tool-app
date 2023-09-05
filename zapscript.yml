@@ -31,7 +31,6 @@ steps:
   displayName: 'Run OWASP ZAP Scan'
   condition: succeededOrFailed()
 
-  condition: always()
 - bash: ' handlebars owaspzap/report.json < owaspzap/nunit-template.hbs > owaspzap/test-results.xml'
   displayName: 'generate nunit type file'
   condition: always()
