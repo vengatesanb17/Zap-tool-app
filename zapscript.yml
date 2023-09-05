@@ -22,7 +22,7 @@ steps:
   inputs:
     aggressivemode: true
     threshold: '200'
-    scantype: 'Attack Mode'
+    scantype: 'Active Scan'
     url: 'http://testphp.vulnweb.com/' # Replace with your target URL
     scriptname: 'exclude-domains.js'
 
