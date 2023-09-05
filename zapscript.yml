@@ -13,7 +13,7 @@ steps:
 - task: owaspzap@1
   inputs:
     aggressivemode: true
-    threshold: '300'
+    threshold: '200'
     scantype: 'SpiderScan'
     url: 'http://testphp.vulnweb.com/' # Replace with your target URL
 
