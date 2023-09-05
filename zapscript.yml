@@ -10,6 +10,17 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
+
+- task: DownloadSecureFile@1
+  inputs:
+    secureFile: 'exclude-domains.js'
+    
+
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: 'ls'
+
 - task: owaspzap@1
   inputs:
     aggressivemode: true
@@ -17,7 +28,7 @@ steps:
     scantype: targetedScan
     scriptname: 'exclude-domain.js'
     url: 'https://owasp.org/www-project-webgoat/' # Replace with your target URL
-
+    enabled: false
 
 - task: PublishBuildArtifacts@1
   inputs:
@@ -72,6 +83,7 @@ steps:
    {{/each}}
    EOF
   displayName: 'owasp nunit template'
+  enabled: false
 
 - task: PublishTestResults@2
   displayName: 'Publish Test Results **/TEST-*.xml'
@@ -79,8 +91,10 @@ steps:
     testResultsFormat: NUnit
     testResultsFiles: 'owaspzap/test-results.xml'
   condition: always()
+  enabled: false
 
 - task: PublishBuildArtifacts@1
   inputs:
     PathtoPublish: '$(System.DefaultWorkingDirectory)/owaspzap'
     ArtifactName: 'ZAP Reports'
+    enabled: false
