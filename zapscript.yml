@@ -25,6 +25,8 @@ steps:
     scantype: 'SpiderScan'
     url: 'http://testphp.vulnweb.com/' # Replace with your target URL
     scriptname: 'exclude-domains.js'
+  
+  dotnet zap-api exclude-url -t http://172.17.0.1:80
 
 - task: PublishBuildArtifacts@1
   inputs:
