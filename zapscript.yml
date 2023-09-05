@@ -31,7 +31,7 @@ steps:
     threshold: '300'
     scantype: targetedScan
     url: 'https://owasp.org/www-project-webgoat/'# Replace with your target URL
-  scriptname: 'exclude-domain.js'
+    scriptname: 'exclude-domain.js'
   enabled: false
 
 - task: PublishBuildArtifacts@1
