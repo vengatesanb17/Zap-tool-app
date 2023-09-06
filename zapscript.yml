@@ -1,5 +1,5 @@
 trigger:
-- main
+- none
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -17,8 +17,8 @@ jobs:
       chmod +x ZAP_2_10_0_unix.sh
       ./ZAP_2_10_0_unix.sh -q
 
-      # Start ZAP in daemon mode (use sudo if required)
-      sudo /path/to/zap/zap.sh -daemon -host 0.0.0.0 -port 8080 -config api.disablekey=true
+      # Start ZAP in daemon mode
+      ./ZAP_2_10_0_unix.sh -daemon -host 0.0.0.0 -port 8080 -config api.disablekey=true
 
       # Wait for ZAP to start
       sleep 10
@@ -26,14 +26,14 @@ jobs:
       # Launch your web application or configure your browser to use ZAP as a proxy
 
       # Perform a Spider scan on the target URL (excluding specific patterns)
-      /path/to/zap/zap.sh -cmd \
+      ./ZAP_2_10_0_unix.sh -cmd \
       "-config spider:excludeList='^http://testphp.vulnweb.com/excluded-path/.*'" \
       -addoninstall ascan
 
-      /path/to/zap/zap.sh -cmd \
+      ./ZAP_2_10_0_unix.sh -cmd \
       "-quickurl http://testphp.vulnweb.com/"
 
-      /path/to/zap/zap.sh -cmd \
+      ./ZAP_2_10_0_unix.sh -cmd \
       "-quickout /path/to/zap-report.html" \
       -addoninstall pscan
   displayName: 'Run ZAP Scan'
