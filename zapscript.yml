@@ -6,29 +6,25 @@ pool:
 
 steps:
 - script: |
-    # Install .NET SDK and the OWASP ZAP NuGet package
-    sudo apt-get update
-    sudo apt-get install -y apt-transport-https
-    sudo apt-get install -y dotnet-sdk-3.1  # Use the appropriate version
-    dotnet tool install --global owasp-zap-api-cli
-
-    # Start the OWASP ZAP daemon
-    zap-api start -v -p 8080 -d -quickurl http://testphp.vulnweb.com/
+    # Pull the OWASP ZAP Docker image
+    docker pull owasp/zap2docker-stable
     
+    # Start the OWASP ZAP Docker container
+    docker run -u zap -p 8080:8080 -p 8090:8090 -d owasp/zap2docker-stable zap.sh -daemon -host 0.0.0.0 -port 8080 -config api.disablekey=true
+
     # Wait for ZAP to start (adjust sleep time as needed)
     sleep 30
-    
+  displayName: 'Start OWASP ZAP Container'
+
+- script: |
     # Perform a quick scan using ZAP API
-    zap-api quick-scan -t http://testphp.vulnweb.com/
+    docker run --network host -v $(Agent.BuildDirectory):/zap/wrk -i owasp/zap2docker-stable zap-api-scan.py -t http://testphp.vulnweb.com/ -r /zap/wrk/zap-report.html
   displayName: 'Run OWASP ZAP Scan'
 
 - script: |
-    # Generate a ZAP report
-    zap-api generate-report -f html -o zap-report.html
-    
     # Copy the ZAP report to the agent workspace
-    cp zap-report.html $(Build.ArtifactStagingDirectory)/zap-report.html
-  displayName: 'Generate and Copy ZAP Report'
+    cp $(Agent.BuildDirectory)/zap-report.html $(Build.ArtifactStagingDirectory)/zap-report.html
+  displayName: 'Copy ZAP Report to Agent'
 
 - task: PublishPipelineArtifact@1
   inputs:
@@ -36,6 +32,7 @@ steps:
     artifact: 'zap-reports'
     publishLocation: 'pipeline'
   condition: succeededOrFailed()
+
 
 
 # - task: owaspzap@1
