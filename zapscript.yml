@@ -4,38 +4,28 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'
 
-jobs:
-- job: ZAPScan
-  steps:
-  - script: |
-      # Start the OWASP ZAP Docker container
-      docker run -d -u zap -p 8080:8080 -p 8090:8090 -i owasp/zap2docker-weekly zap.sh -daemon -host 0.0.0.0 -port 8080 -config api.disablekey=true
+steps:
+- script: |
+    # Start the OWASP ZAP Docker container
+    docker run -d -u zap -p 8080:8080 -p 8090:8090 -i owasp/zap2docker-weekly zap.sh -daemon -host 0.0.0.0 -port 8080 -config api.disablekey=true
 
-      # Wait for ZAP to start (adjust sleep time as needed)
-      sleep 30
-    displayName: 'Start OWASP ZAP Container'
+    # Wait for ZAP to start (adjust sleep time as needed)
+    sleep 30
+  displayName: 'Start OWASP ZAP Container'
 
-  - script: |
-      # Perform a quick scan using ZAP API
-      docker run -t --network host -i owasp/zap2docker-weekly zap-api-scan.py -t http://testphp.vulnweb.com/ -r zap-report.html
+- script: |
+    # Perform a quick scan using ZAP API
+    docker run -t --network host -i owasp/zap2docker-weekly zap-api-scan.py -t http://testphp.vulnweb.com/ -r /zap/wrk/zap-report.html
 
-      # Copy the report out of the container
-      docker cp $(docker ps -q -n=1):/zap/wrk/zap-report.html $(Build.ArtifactStagingDirectory)/zap-report.html
-    displayName: 'Run OWASP ZAP Scan'
+    # Copy the report out of the container
+    docker cp $(docker ps -q -n=1):/zap/wrk/zap-report.html $(Agent.TempDirectory)/zap-report.html
+  displayName: 'Run OWASP ZAP Scan'
 
-
-  - task: PublishPipelineArtifact@1
-    inputs:
-      targetPath: '$(Build.ArtifactStagingDirectory)'
-      artifact: 'zap-reports'
-      publishLocation: 'pipeline'
-
-  - task: CopyFiles@2
-    inputs:
-      SourceFolder: '$(Build.ArtifactStagingDirectory)'
-      Contents: '**/*.html'  # You can specify the file pattern to match the files you want to copy.
-      TargetFolder: '$(Build.ArtifactStagingDirectory)/copied-reports'  # Specify the target folder where the files will be copied.
-      CleanTargetFolder: true  # Optional: Clear the target folder before copying if set to true.
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: '$(Agent.TempDirectory)'
+    artifact: 'zap-reports'
+    publishLocation: 'pipeline'
 
 # - task: owaspzap@1
 #   inputs:
