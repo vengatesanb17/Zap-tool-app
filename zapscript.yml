@@ -10,91 +10,113 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-- task: PowerShell@2
-  inputs:
-    targetType: 'inline'
-    script: 'ls -lrt'
 
-- task: PowerShell@2
-  inputs:
-    targetType: 'inline'
-    script: 'PWD'
-- task: owaspzap@1
-  inputs:
-    aggressivemode: false
-    threshold: '232'
-    scantype: 'targetedScan'
-    url: 'http://testphp.vulnweb.com/'
-    port: 'http://testphp.vulnweb.com/:80'
-    provideCustomContext: true
-    contextPath: '/home/vsts/work/1/s/exclude-domains.js'
-  enabled: true
+script:
+    - |
+      # Start ZAP in daemon mode
+      zap.sh -daemon -host 0.0.0.0 -port 8080 -config api.disablekey=true
 
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(System.DefaultWorkingDirectory)/owaspzap'
-    ArtifactName: zap
-- bash: |
-   sudo npm install -g handlebars-cmd
-   cat <<EOF > owaspzap/nunit-template.hbs
-   {{#each site}}
-   <test-run
-       id="2"
-       name="Owasp test"
-       start-time="{{../[@generated]}}"  >
-       <test-suite
-           id="{{@index}}"
-           type="Assembly"
-           name="{{[@name]}}"
-           result="Failed"
-           failed="{{alerts.length}}">
-           <attachments>
-               <attachment>
-                   <filePath>owaspzap/report.html</filePath>
-               </attachment>
-           </attachments>
-       {{#each alerts}}<test-case
-           id="{{@index}}"
-           name="{{alert}}"
-           result="Failed"
-           fullname="{{alert}}"
-           time="1">
-               <failure>
-                   <message>
-                       <![CDATA[{{{desc}}}]]>
-                   </message>
-                   <stack-trace>
-                       <![CDATA[
-   Solution:
-   {{{solution}}}
-   Reference:
-   {{{reference}}}
-   instances:{{#each instances}}
-   * {{uri}}
-       - {{method}}
-       {{#if evidence}}- {{{evidence}}}{{/if}}
-                       {{/each}}]]>
-                   </stack-trace>
-               </failure>
-       </test-case>
-       {{/each}}
-       </test-suite>
-   </test-run>
-   {{/each}}
-   EOF
-  displayName: 'owasp nunit template'
-  enabled: true
+      # Wait for ZAP to start (adjust sleep duration as needed)
+      sleep 10
 
-- task: PublishTestResults@2
-  displayName: 'Publish Test Results **/TEST-*.xml'
-  inputs:
-    testResultsFormat: NUnit
-    testResultsFiles: 'owaspzap/test-results.xml'
-  condition: always()
-  enabled: true
+      # Configure URL exclude patterns
+      zap-cli --excludeurls '^http://testphp.vulnweb.com/excluded-path/.*'
 
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(System.DefaultWorkingDirectory)/owaspzap'
-    ArtifactName: 'ZAP Reports'
-  enabled: true
+      # Launch your web application or configure your browser to use ZAP as a proxy
+
+      # Perform a Spider scan on the target URL
+      zap-cli --spider -r http://testphp.vulnweb.com/
+
+      # Wait for the Spider scan to complete (adjust sleep duration as needed)
+      sleep 300
+
+      # Run an Active Scan on the discovered URLs
+      zap-cli --active-scan -r http://testphp.vulnweb.com/
+
+      # Wait for the Active Scan to complete (adjust sleep duration as needed)
+      sleep 600
+      
+      zap-cli report -o zap-report.html -f html
+
+      # Shutdown ZAP
+      zap-cli --shutdown
+      
+# - task: owaspzap@1
+#   inputs:
+#     aggressivemode: false
+#     threshold: '232'
+#     scantype: 'targetedScan'
+#     url: 'http://testphp.vulnweb.com/'
+#     port: 'http://testphp.vulnweb.com/:80'
+#     provideCustomContext: true
+#     contextPath: '/home/vsts/work/1/s/exclude-domains.js'
+#   enabled: true
+
+# - task: PublishBuildArtifacts@1
+#   inputs:
+#     PathtoPublish: '$(System.DefaultWorkingDirectory)/owaspzap'
+#     ArtifactName: zap
+# - bash: |
+#    sudo npm install -g handlebars-cmd
+#    cat <<EOF > owaspzap/nunit-template.hbs
+#    {{#each site}}
+#    <test-run
+#        id="2"
+#        name="Owasp test"
+#        start-time="{{../[@generated]}}"  >
+#        <test-suite
+#            id="{{@index}}"
+#            type="Assembly"
+#            name="{{[@name]}}"
+#            result="Failed"
+#            failed="{{alerts.length}}">
+#            <attachments>
+#                <attachment>
+#                    <filePath>owaspzap/report.html</filePath>
+#                </attachment>
+#            </attachments>
+#        {{#each alerts}}<test-case
+#            id="{{@index}}"
+#            name="{{alert}}"
+#            result="Failed"
+#            fullname="{{alert}}"
+#            time="1">
+#                <failure>
+#                    <message>
+#                        <![CDATA[{{{desc}}}]]>
+#                    </message>
+#                    <stack-trace>
+#                        <![CDATA[
+#    Solution:
+#    {{{solution}}}
+#    Reference:
+#    {{{reference}}}
+#    instances:{{#each instances}}
+#    * {{uri}}
+#        - {{method}}
+#        {{#if evidence}}- {{{evidence}}}{{/if}}
+#                        {{/each}}]]>
+#                    </stack-trace>
+#                </failure>
+#        </test-case>
+#        {{/each}}
+#        </test-suite>
+#    </test-run>
+#    {{/each}}
+#    EOF
+#   displayName: 'owasp nunit template'
+#   enabled: true
+
+# - task: PublishTestResults@2
+#   displayName: 'Publish Test Results **/TEST-*.xml'
+#   inputs:
+#     testResultsFormat: NUnit
+#     testResultsFiles: 'owaspzap/test-results.xml'
+#   condition: always()
+#   enabled: true
+
+# - task: PublishBuildArtifacts@1
+#   inputs:
+#     PathtoPublish: '$(System.DefaultWorkingDirectory)/owaspzap'
+#     ArtifactName: 'ZAP Reports'
+#   enabled: true
