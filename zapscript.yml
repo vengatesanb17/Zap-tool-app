@@ -4,9 +4,6 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'
 
-variables:
-  ZAP_REPORT: '' # Variable to store the ZAP report content
-
 steps:
 - script: |
     # Start the OWASP ZAP Docker container
@@ -17,25 +14,19 @@ steps:
   displayName: 'Start OWASP ZAP Container'
 
 - script: |
-    # Perform a quick scan using ZAP API and store the report in a variable
-    ZAP_REPORT=$(docker run -t --network host -i owasp/zap2docker-weekly zap-api-scan.py -t http://testphp.vulnweb.com/ -r /zap/wrk/zap-report.html)
+    # Perform a quick scan using ZAP API and store the report in a file
+    docker run -t --network host -i owasp/zap2docker-weekly zap-api-scan.py -t http://testphp.vulnweb.com/ -r /zap/wrk/zap-report.html
 
-    # Display the report content for verification (optional)
-    echo "$ZAP_REPORT"
+    # Copy the report out of the container to a known location
+    docker cp $(docker ps -q -n=1):/zap/wrk/zap-report.html $(Build.SourcesDirectory)/zap-report.html
   displayName: 'Run OWASP ZAP Scan'
-
-- powershell: |
-    # Publish the ZAP report content as a pipeline variable
-    Write-Host "##vso[task.setvariable variable=ZAP_REPORT;isOutput=true]$env:ZAP_REPORT"
-  displayName: 'Publish ZAP Report as Pipeline Variable'
 
 - task: PublishPipelineArtifact@1
   inputs:
-    targetPath: '$(System.DefaultWorkingDirectory)'
+    targetPath: '$(Build.SourcesDirectory)'
     artifact: 'zap-reports'
     publishLocation: 'pipeline'
   condition: succeededOrFailed()
-
 
 # - task: owaspzap@1
 #   inputs:
