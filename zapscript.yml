@@ -4,34 +4,52 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'
 
-steps:
-- task: UseDotNet@2
-  inputs:
-    packageType: 'sdk'
-    version: '3.x'
-    installationPath: $(Agent.ToolsDirectory)/dotnet
+jobs:
+- job: ZAPScan
+  steps:
+  - task: UseDotNet@2
+    inputs:
+      packageType: 'sdk'
+      version: '3.x'
+      installationPath: $(Agent.ToolsDirectory)/dotnet
 
-- script: |
-    dotnet tool install -g owasp-zap-api
-    dotnet zap-api start -v -p 8080 -d -quickurl http://testphp.vulnweb.com/
-    dotnet zap-api quick-scan -t http://testphp.vulnweb.com/
-    dotnet zap-api generate-report -f html -o $(Build.ArtifactStagingDirectory)/zap-report.html
-    dotnet zap-api shutdown
-  displayName: 'Run OWASP ZAP Scan'
-  condition: succeededOrFailed()
+  - script: |
+      # Install OWASP ZAP API .NET tool
+      dotnet tool install -g owasp-zap-api --version <desired_version>
+      # Replace <desired_version> with the actual version you want to install
 
-- task: PublishPipelineArtifact@1
-  inputs:
-    targetPath: '$(Build.ArtifactStagingDirectory)'
-    artifact: 'zap-reports'
-    publishLocation: 'pipeline'
+      # Start OWASP ZAP in daemon mode
+      dotnet zap-api start -v -p 8080 -d -quickurl http://testphp.vulnweb.com/
 
-- task: CopyFiles@2
-  inputs:
-    SourceFolder: '$(Build.ArtifactStagingDirectory)'
-    Contents: '**/*.html'  # You can specify the file pattern to match the files you want to copy.
-    TargetFolder: '$(Build.ArtifactStagingDirectory)/copied-reports'  # Specify the target folder where the files will be copied.
-    CleanTargetFolder: true  # Optional: Clear the target folder before copying if set to true.
+      # Wait for OWASP ZAP to start (adjust sleep time as needed)
+      sleep 10
+
+      # Perform a quick scan on the target URL
+      dotnet zap-api quick-scan -t http://testphp.vulnweb.com/
+
+      # Wait for the scan to complete (adjust sleep time as needed)
+      sleep 300
+
+      # Generate a ZAP HTML report
+      dotnet zap-api generate-report -f html -o $(Build.ArtifactStagingDirectory)/zap-report.html
+
+      # Shutdown OWASP ZAP
+      dotnet zap-api shutdown
+    displayName: 'Run OWASP ZAP Scan'
+    condition: succeededOrFailed()
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '$(Build.ArtifactStagingDirectory)'
+      artifact: 'zap-reports'
+      publishLocation: 'pipeline'
+
+  - task: CopyFiles@2
+    inputs:
+      SourceFolder: '$(Build.ArtifactStagingDirectory)'
+      Contents: '**/*.html'  # You can specify the file pattern to match the files you want to copy.
+      TargetFolder: '$(Build.ArtifactStagingDirectory)/copied-reports'  # Specify the target folder where the files will be copied.
+      CleanTargetFolder: true  # Optional: Clear the target folder before copying if set to true.
 
 # - task: owaspzap@1
 #   inputs:
