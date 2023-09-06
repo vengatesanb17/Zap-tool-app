@@ -27,12 +27,10 @@ steps:
     script: 'PWD'
 - task: owaspzap@1
   inputs:
-    timeoutInMinutes: 120
     aggressivemode: true
-    threshold: '300'
+    threshold: '50'
     scantype: targetedScan
-    scriptname: '/home/vsts/work/1/s/exclude-domains.js'
-    url: 'https://owasp.org/www-project-juice-shop/'
+    url: 'http://testphp.vulnweb.com/'
   enabled: true
 
 - task: PublishBuildArtifacts@1
@@ -88,7 +86,7 @@ steps:
    {{/each}}
    EOF
   displayName: 'owasp nunit template'
-  enabled: false
+  enabled: true
 
 - task: PublishTestResults@2
   displayName: 'Publish Test Results **/TEST-*.xml'
@@ -96,10 +94,10 @@ steps:
     testResultsFormat: NUnit
     testResultsFiles: 'owaspzap/test-results.xml'
   condition: always()
-  enabled: false
+  enabled: true
 
 - task: PublishBuildArtifacts@1
   inputs:
     PathtoPublish: '$(System.DefaultWorkingDirectory)/owaspzap'
     ArtifactName: 'ZAP Reports'
-  enabled: false
+  enabled: true
