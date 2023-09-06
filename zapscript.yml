@@ -27,6 +27,7 @@ steps:
     script: 'PWD'
 - task: owaspzap@1
   inputs:
+    timeoutInMinutes: 120
     aggressivemode: true
     threshold: '300'
     scantype: targetedScan
