@@ -4,43 +4,35 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'
 
-jobs:
-- job: ZAPScan
-  steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '3.x'
-      addToPath: true
-  - script: |
-      # Install OWASP ZAP
-      wget https://github.com/zaproxy/zaproxy/releases/download/v2.10.0/ZAP_2_10_0_unix.sh
-      chmod +x ZAP_2_10_0_unix.sh
-      ./ZAP_2_10_0_unix.sh -q
+steps:
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '3.x'
+    installationPath: $(Agent.ToolsDirectory)/dotnet
 
-      # Start ZAP in daemon mode
-      ./ZAP_2_10_0_unix.sh -daemon -host 0.0.0.0 -port 8080 -config api.disablekey=true
+- script: |
+    dotnet tool install -g owasp-zap-api
+    dotnet zap-api start -v -p 8080 -d -quickurl http://testphp.vulnweb.com/
+    dotnet zap-api quick-scan -t http://testphp.vulnweb.com/
+    dotnet zap-api generate-report -f html -o $(Build.ArtifactStagingDirectory)/zap-report.html
+    dotnet zap-api shutdown
+  displayName: 'Run OWASP ZAP Scan'
+  condition: succeededOrFailed()
 
-      # Wait for ZAP to start
-      sleep 10
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: '$(Build.ArtifactStagingDirectory)'
+    artifact: 'zap-reports'
+    publishLocation: 'pipeline'
 
-      # Launch your web application or configure your browser to use ZAP as a proxy
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: '$(Build.ArtifactStagingDirectory)'
+    Contents: '**/*.html'  # You can specify the file pattern to match the files you want to copy.
+    TargetFolder: '$(Build.ArtifactStagingDirectory)/copied-reports'  # Specify the target folder where the files will be copied.
+    CleanTargetFolder: true  # Optional: Clear the target folder before copying if set to true.
 
-      # Perform a Spider scan on the target URL (excluding specific patterns)
-      ./ZAP_2_10_0_unix.sh -cmd \
-      "-config spider:excludeList='^http://testphp.vulnweb.com/excluded-path/.*'" \
-      -addoninstall ascan
-
-      ./ZAP_2_10_0_unix.sh -cmd \
-      "-quickurl http://testphp.vulnweb.com/"
-
-      ./ZAP_2_10_0_unix.sh -cmd \
-      "-quickout /path/to/zap-report.html" \
-      -addoninstall pscan
-  displayName: 'Run ZAP Scan'
-
-
-
-      
 # - task: owaspzap@1
 #   inputs:
 #     aggressivemode: false
