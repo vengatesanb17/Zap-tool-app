@@ -29,6 +29,7 @@ steps:
   inputs:
     aggressivemode: true
     threshold: '300'
+    scantype: targetedScan
     scriptname: '/home/vsts/work/1/s/exclude-domains.js'
     url: 'https://owasp.org/www-project-juice-shop/'
   enabled: true
