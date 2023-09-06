@@ -27,7 +27,7 @@ steps:
     script: 'PWD'
 - task: owaspzap@1
   inputs:
-    aggressivemode: true
+    aggressivemode: false
     scantype: 'targetedScan'
     url: 'http://testphp.vulnweb.com/'
     provideCustomContext: true
