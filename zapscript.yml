@@ -27,10 +27,11 @@ steps:
     script: 'PWD'
 - task: owaspzap@1
   inputs:
-    aggressivemode: false
-    threshold: '50'
-    scantype: agentScan
+    aggressivemode: true
+    scantype: 'targetedScan'
     url: 'http://testphp.vulnweb.com/'
+    provideCustomContext: true
+    contextPath: '/home/vsts/work/1/s/exclude-domains.js'
   enabled: true
 
 - task: PublishBuildArtifacts@1
