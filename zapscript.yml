@@ -7,16 +7,26 @@ trigger:
 - none
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'ubuntu-latest'
 
-steps:
+jobs:
+- job: ZAPScan
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.x'
+      addToPath: true
+  - script: |
+      # Install OWASP ZAP
+      wget https://github.com/zaproxy/zaproxy/releases/download/v2.10.0/ZAP_2_10_0_unix.sh
+      chmod +x ZAP_2_10_0_unix.sh
+      ./ZAP_2_10_0_unix.sh -q
+      export PATH=$PATH:/path/to/zap
 
-script:
-    - |
       # Start ZAP in daemon mode
       zap.sh -daemon -host 0.0.0.0 -port 8080 -config api.disablekey=true
 
-      # Wait for ZAP to start (adjust sleep duration as needed)
+      # Wait for ZAP to start
       sleep 10
 
       # Configure URL exclude patterns
@@ -27,19 +37,22 @@ script:
       # Perform a Spider scan on the target URL
       zap-cli --spider -r http://testphp.vulnweb.com/
 
-      # Wait for the Spider scan to complete (adjust sleep duration as needed)
+      # Wait for the Spider scan to complete
       sleep 300
 
       # Run an Active Scan on the discovered URLs
       zap-cli --active-scan -r http://testphp.vulnweb.com/
 
-      # Wait for the Active Scan to complete (adjust sleep duration as needed)
+      # Wait for the Active Scan to complete
       sleep 600
-      
+
+      # Generate a ZAP report
       zap-cli report -o zap-report.html -f html
 
       # Shutdown ZAP
       zap-cli --shutdown
+    displayName: 'Run ZAP Scan'
+
       
 # - task: owaspzap@1
 #   inputs:
