@@ -14,29 +14,14 @@ jobs:
       installationPath: $(Agent.ToolsDirectory)/dotnet
 
   - script: |
-      # Install OWASP ZAP API .NET tool
-      dotnet tool install -g owasp-zap-api --version <desired_version>
-      # Replace <desired_version> with the actual version you want to install
-
-      # Start OWASP ZAP in daemon mode
+      dotnet tool install -g owasp-zap-api --version 1.0.0  # Replace with the actual version you want to install
       dotnet zap-api start -v -p 8080 -d -quickurl http://testphp.vulnweb.com/
-
-      # Wait for OWASP ZAP to start (adjust sleep time as needed)
-      sleep 10
-
-      # Perform a quick scan on the target URL
       dotnet zap-api quick-scan -t http://testphp.vulnweb.com/
-
-      # Wait for the scan to complete (adjust sleep time as needed)
-      sleep 300
-
-      # Generate a ZAP HTML report
       dotnet zap-api generate-report -f html -o $(Build.ArtifactStagingDirectory)/zap-report.html
-
-      # Shutdown OWASP ZAP
       dotnet zap-api shutdown
     displayName: 'Run OWASP ZAP Scan'
     condition: succeededOrFailed()
+
 
   - task: PublishPipelineArtifact@1
     inputs:
