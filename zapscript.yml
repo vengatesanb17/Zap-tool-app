@@ -7,20 +7,21 @@ pool:
 jobs:
 - job: ZAPScan
   steps:
-  - task: UseDotNet@2
-    inputs:
-      packageType: 'sdk'
-      version: '3.x'
-      installationPath: $(Agent.ToolsDirectory)/dotnet
+  - script: |
+      # Start the OWASP ZAP Docker container
+      docker run -d -u zap -p 8080:8080 -p 8090:8090 -i owasp/zap2docker-weekly zap.sh -daemon -host 0.0.0.0 -port 8080 -config api.disablekey=true
+
+      # Wait for ZAP to start (adjust sleep time as needed)
+      sleep 30
+    displayName: 'Start OWASP ZAP Container'
 
   - script: |
-      dotnet tool install -g owasp-zap-api --version 1.0.0  # Replace with the actual version you want to install
-      dotnet zap-api start -v -p 8080 -d -quickurl http://testphp.vulnweb.com/
-      dotnet zap-api quick-scan -t http://testphp.vulnweb.com/
-      dotnet zap-api generate-report -f html -o $(Build.ArtifactStagingDirectory)/zap-report.html
-      dotnet zap-api shutdown
+      # Perform a quick scan using ZAP API
+      docker run -t --network host -i owasp/zap2docker-weekly zap-api-scan.py -t http://testphp.vulnweb.com/ -r zap-report.html
+
+      # Copy the report out of the container
+      docker cp $(docker ps -q -n=1):/zap/wrk/zap-report.html $(Build.ArtifactStagingDirectory)/zap-report.html
     displayName: 'Run OWASP ZAP Scan'
-    condition: succeededOrFailed()
 
 
   - task: PublishPipelineArtifact@1
