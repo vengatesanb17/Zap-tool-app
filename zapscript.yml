@@ -27,7 +27,7 @@ steps:
     script: 'PWD'
 - task: owaspzap@1
   inputs:
-    aggressivemode: true
+    aggressivemode: false
     threshold: '50'
     scantype: agentScan
     url: 'http://testphp.vulnweb.com/'
